@@ -73,14 +73,12 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>K8s集群是由一系列节点组成，容器化应用运行在节点之上，并由控制平面统一管理，下图展示了K8s集群的各种组件之间的关系。</p>
-<p><img src="https://d33wubrfki0l68.cloudfront.net/2475489eaf20163ec0f54ddc1d92aa8d4c87c96b/e7c81/images/docs/components-of-kubernetes.svg" alt="Kubernetes 组件"></p>
+        <p>K8s集群是由一系列节点组成，容器化应用运行在节点之上，并由控制平面统一管理，下图展示了K8s集群的各种组件之间的关系。<img src="https://d33wubrfki0l68.cloudfront.net/2475489eaf20163ec0f54ddc1d92aa8d4c87c96b/e7c81/images/docs/components-of-kubernetes.svg" alt="Kubernetes 组件"></p>
 <p>这一系列组件分别都有什么作用，互相之间又是如何协作完成容器的编排任务的。</p>
 <h3 id="节点与控制平台之间的通信"><a href="#节点与控制平台之间的通信" class="headerlink" title="节点与控制平台之间的通信"></a>节点与控制平台之间的通信</h3><p>控制平面中的组件对集群做出全局决策，检测和响应集群事件。为了简单起见，通常会在一个节点上启动所有控制组件，并且不会在此节点上部署应用容器。</p>
 <p>在控制节点启动时，首先会运行api server进程，提供集群管理接口，它是集群内各个功能模块数据交互和通信的枢纽。</p>
 <p>在Node节点上，都会运行一个kubelet进程，它用来维护Node节点上运行的pod。它会向控制节点汇报自身节点的运行状态，负责接收通过各类机制提供给节点的pod信息，并且保证节点上pod的健康状况。</p>
-<p>关于pod，它是k8s调度的最基本单位，在k8s中应用是容器化部署的，但是对于容器的管理并不是互相独立的，而是以pod为单位的。在一个pod中可以包含多个容器，并且这些容器是共享网络资源的。每个 Pod 启动，内部都会启动一个 pause 容器（google的一个镜像），它使用默认的网络模式，而其他容器的网络都设置给它，以此来完成网络的共享问题。</p>
-<p><img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-02.png" alt="img"></p>
+<p>关于pod，它是k8s调度的最基本单位，在k8s中应用是容器化部署的，但是对于容器的管理并不是互相独立的，而是以pod为单位的。在一个pod中可以包含多个容器，并且这些容器是共享网络资源的。每个 Pod 启动，内部都会启动一个 pause 容器（google的一个镜像），它使用默认的网络模式，而其他容器的网络都设置给它，以此来完成网络的共享问题。<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-02.png" alt="img"></p>
 <h3 id="Pod调度"><a href="#Pod调度" class="headerlink" title="Pod调度"></a>Pod调度</h3><p>Pod的调度工作是由kube scheduler提供的，它运行在控制节点上，新创建还没有分配到节点上的pod将在其上通过一系列算法，找到适合部署的节点，并部署到相应节点上，这个过程称为调度。</p>
 <h3 id="ETCD"><a href="#ETCD" class="headerlink" title="ETCD"></a>ETCD</h3><p>从上面的 Pod 调度的角度看，我们得有一个存储中心，用来存储各节点资源使用情况、健康状态、以及各 Pod 的基本信息等，这样 Pod 的调度才能正常进行。</p>
 <p>在 K8S 中，采用 <a target="_blank" rel="noopener" href="https://github.com/coreos/etcd">etcd 组件</a> 作为一个高可用强一致性的存储仓库，该组件可以内置在 K8S 中，也可以外部搭建供 K8S 使用。</p>
