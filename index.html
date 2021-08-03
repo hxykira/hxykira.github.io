@@ -73,23 +73,25 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>K8s集群是由一系列节点组成，容器化应用运行在节点之上，并由控制平面统一管理，下图展示了K8s集群的各种组件之间的关系。<img src="https://d33wubrfki0l68.cloudfront.net/2475489eaf20163ec0f54ddc1d92aa8d4c87c96b/e7c81/images/docs/components-of-kubernetes.svg" alt="Kubernetes 组件"></p>
+        <p>K8s集群是由一系列节点组成，容器化应用运行在节点之上，并由控制平面统一管理，下图展示了K8s集群的各种组件之间的关系。<img src="https://d33wubrfki0l68.cloudfront.net/2475489eaf20163ec0f54ddc1d92aa8d4c87c96b/e7c81/images/docs/components-of-kubernetes.svg" alt="Kubernetes 组件" style="zoom: 50%;" /></p>
 <p>这一系列组件分别都有什么作用，互相之间又是如何协作完成容器的编排任务的。</p>
 <h3 id="节点与控制平台之间的通信"><a href="#节点与控制平台之间的通信" class="headerlink" title="节点与控制平台之间的通信"></a>节点与控制平台之间的通信</h3><p>控制平面中的组件对集群做出全局决策，检测和响应集群事件。为了简单起见，通常会在一个节点上启动所有控制组件，并且不会在此节点上部署应用容器。</p>
 <p>在控制节点启动时，首先会运行api server进程，提供集群管理接口，它是集群内各个功能模块数据交互和通信的枢纽。</p>
 <p>在Node节点上，都会运行一个kubelet进程，它用来维护Node节点上运行的pod。它会向控制节点汇报自身节点的运行状态，负责接收通过各类机制提供给节点的pod信息，并且保证节点上pod的健康状况。</p>
-<p>关于pod，它是k8s调度的最基本单位，在k8s中应用是容器化部署的，但是对于容器的管理并不是互相独立的，而是以pod为单位的。在一个pod中可以包含多个容器，并且这些容器是共享网络资源的。每个 Pod 启动，内部都会启动一个 pause 容器（google的一个镜像），它使用默认的网络模式，而其他容器的网络都设置给它，以此来完成网络的共享问题。<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-02.png" alt="img"></p>
+<p>关于pod，它是k8s调度的最基本单位，在k8s中应用是容器化部署的，但是对于容器的管理并不是互相独立的，而是以pod为单位的。在一个pod中可以包含多个容器，并且这些容器是共享网络资源的。每个 Pod 启动，内部都会启动一个 pause 容器（google的一个镜像），它使用默认的网络模式，而其他容器的网络都设置给它，以此来完成网络的共享问题。<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-02.png" alt="img" style="zoom:33%;" /></p>
 <h3 id="Pod调度"><a href="#Pod调度" class="headerlink" title="Pod调度"></a>Pod调度</h3><p>Pod的调度工作是由kube scheduler提供的，它运行在控制节点上，新创建还没有分配到节点上的pod将在其上通过一系列算法，找到适合部署的节点，并部署到相应节点上，这个过程称为调度。</p>
 <h3 id="ETCD"><a href="#ETCD" class="headerlink" title="ETCD"></a>ETCD</h3><p>从上面的 Pod 调度的角度看，我们得有一个存储中心，用来存储各节点资源使用情况、健康状态、以及各 Pod 的基本信息等，这样 Pod 的调度才能正常进行。</p>
 <p>在 K8S 中，采用 <a target="_blank" rel="noopener" href="https://github.com/coreos/etcd">etcd 组件</a> 作为一个高可用强一致性的存储仓库，该组件可以内置在 K8S 中，也可以外部搭建供 K8S 使用。</p>
 <p>集群上的所有配置信息都存储在了 etcd，为了考虑各个组件的相对独立，以及整体的维护性，对于这些存储数据的增、删、改、查，统一由 kube-apiserver 来进行调用，apiserver 也提供了 REST 的支持，不仅对各个内部组件提供服务外，还对集群外部用户暴露服务。</p>
 <p>外部用户可以通过 REST 接口，或者 kubectl 命令行工具进行集群管理，其内在都是与 apiserver 进行通信。</p>
-<p><img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-04.png" alt="img"></p>
+<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-04.png" alt="img" style="zoom:33%;" />
+
 <h3 id="访问Pod"><a href="#访问Pod" class="headerlink" title="访问Pod"></a>访问Pod</h3><p>K8S 引入了 service 的概念，将多个相同的 Pod 包装成一个完整的 service 对外提供服务。至于如何获取到这些相同的 Pod，每个 Pod 启动时都会设置 labels 属性，在 service 中我们通过选择器 selector，选择具有相同 name 标签属性的 Pod，作为整体服务，并将服务信息通过 apiserver 存入 etcd 中，该工作由 Service Controller 来完成。同时，每个节点上会启动一个 <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/admin/kube-proxy/">kube-proxy</a> 进程，由它来负责服务地址到 Pod 地址的代理以及负载均衡等工作。</p>
-<p><img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-05.png" alt="img"></p>
+<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-05.png" alt="img" style="zoom:33%;" />
+
 <h3 id="动态扩缩容"><a href="#动态扩缩容" class="headerlink" title="动态扩缩容"></a>动态扩缩容</h3><p>既然知道了服务是由 Pod 组成的，那么服务的扩容也就意味着 Pod 的扩容。通俗点讲，就是在需要时将 Pod 复制多份，在不需要后，将 Pod 缩减至指定份数。K8S 中通过 Replication Controller 来进行管理，为每个 Pod 设置一个期望的副本数，当实际副本数与期望不符时，就动态的进行数量调整，以达到期望值。期望数值可以由我们手动更新，或自动扩容代理来完成。</p>
 <h3 id="组件之间的相互协作"><a href="#组件之间的相互协作" class="headerlink" title="组件之间的相互协作"></a>组件之间的相互协作</h3><p>最后，讲一下 kube-controller-manager 这个进程的作用。我们知道了 ectd 是作为集群数据的存储中心， apiserver 是管理数据中心，作为其他进程与数据中心通信的桥梁。而 Service Controller、Replication Controller 这些统一交由 kube-controller-manager 来管理，kube-controller-manager 作为一个守护进程，每个 Controller 都是一个控制循环，通过 apiserver 监视集群的共享状态，并尝试将实际状态与期望不符的进行改变。关于 Controller，manager 中还包含了 Node 节点控制器（Node Controller）、资源配额管控制器（ResourceQuota Controller）、命名空间控制器（Namespace Controller）等。</p>
-<p><img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-07.png" alt="img"></p>
+<img src="https://github.com/jasonGeng88/blog/raw/master/201707/assets/k8s-frame-07.png" alt="img" style="zoom:33%;" />
 
       
     </div>
